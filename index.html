@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ukiyo-e Quantum Physics</title>
+    <meta name="description" content="Квантовая физика в стиле японских гравюр">
+    
+    <!-- Tailwind for layout structural basics, heavily overridden later -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Noto Serif JP for that brush feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;500;900&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --paper-bg: #f0ebd8;
+            --paper-dark: #e6e0c5;
+            --ink-primary: #1a1a1a;
+            --ink-secondary: #2f2f2f;
+            --hokusai-blue: #2b4c65;
+            --prussian-blue: #102a45;
+            --faded-red: #c25e5e;
+            --stamp-red: #d93a3a;
+        }
+
+        body {
+            background-color: var(--paper-bg);
+            color: var(--ink-primary);
+            font-family: 'Noto Serif JP', serif;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- TEXTURE GENERATION (NO EXTERNAL IMAGES EXCEPT CONTENT) --- */
+        .paper-texture {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+        }
+
+        /* --- WOODBLOCK FILTER EFFECT --- */
+        /* This creates the roughened, ink-bleed edges typical of woodblock prints */
+        .woodblock-effect {
+            filter: url('#woodblock-filter');
+        }
+
+        /* --- TYPOGRAPHY --- */
+        .tategaki {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 0.3em;
+        }
+
+        h1, h2, h3 {
+            font-weight: 900;
+            letter-spacing: -0.05em;
+        }
+
+        p {
+            font-weight: 500;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        /* --- LAYOUT UTILS --- */
+        .frame-border {
+            border: 2px solid var(--ink-primary);
+            padding: 10px;
+            position: relative;
+        }
+        
+        .frame-border::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 1px solid var(--ink-primary);
+            pointer-events: none;
+        }
+
+        .ink-wash {
+            position: relative;
+        }
+        .ink-wash::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 0%, var(--paper-dark) 100%);
+            opacity: 0.5;
+            mix-blend-mode: multiply;
+        }
+
+        /* --- STAMP --- */
+        .hanko {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--stamp-red);
+            color: var(--stamp-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            transform: rotate(-5deg);
+            mix-blend-mode: multiply;
+            opacity: 0.8;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .hanko:hover {
+            transform: rotate(0deg) scale(1.1);
+        }
+
+        /* --- SCROLL ANIMATIONS --- */
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Specific Japanese layout tweaks */
+        .chapter-number {
+            font-family: 'IM Fell English SC', serif;
+            color: var(--faded-red);
+            font-size: 1.5rem;
+        }
+
+        /* Grain overlay for images to make them look printed */
+        .printed-image {
+            filter: sepia(0.4) contrast(1.2) brightness(0.9) url('#woodblock-filter');
+            mix-blend-mode: multiply;
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--paper-bg); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--hokusai-blue); 
+        }
+
+        /* Navigation hidden menu */
+        .nav-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 0;
+            background: var(--hokusai-blue);
+            z-index: 10000;
+            transition: width 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .nav-overlay.open {
+            width: 100%;
+        }
+
+        .nav-link {
+            color: var(--paper-bg);
+            font-size: 2rem;
+            margin: 20px 0;
+            text-decoration: none;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        
+        .nav-overlay.open .nav-link {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Delays for menu items */
+        .nav-link:nth-child(1) { transition-delay: 0.1s; }
+        .nav-link:nth-child(2) { transition-delay: 0.2s; }
+        .nav-link:nth-child(3) { transition-delay: 0.3s; }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 3rem;
+            color: var(--paper-bg);
+            cursor: pointer;
+        }
+
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9998;
+            cursor: pointer;
+            mix-blend-mode: multiply;
+        }
+        
+        .menu-char {
+            font-size: 2rem;
+            font-weight: 900;
+            border: 2px solid var(--ink-primary);
+            padding: 5px 10px;
+            background: var(--paper-bg);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SVG Filters Definition (Invisible but essential) -->
+    <svg style="display: none;">
+        <defs>
+            <filter id="woodblock-filter">
+                <!-- Roughen edges -->
+                <feTurbulence type="fractalNoise" baseFrequency="0.01 0.02" numOctaves="5" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+                <!-- Erode slightly to look like ink absorption -->
+                <feMorphology operator="erode" radius="0.5" />
+                <!-- Color matrix to reduce pure blacks/whites to paper tones (optional, handling via CSS vars mostly) -->
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Paper Texture Overlay -->
+    <div class="paper-texture"></div>
+
+    <!-- Navigation -->
+    <div class="hamburger" onclick="toggleMenu()">
+        <div class="menu-char tategaki">目次</div>
+    </div>
+
+    <div class="nav-overlay" id="navOverlay">
+        <div class="close-btn" onclick="toggleMenu()">&times;</div>
+        <a href="#intro" class="nav-link tategaki" onclick="toggleMenu()">浮世 (Мир)</a>
+        <a href="#wave" class="nav-link tategaki" onclick="toggleMenu()">波動 (Волна)</a>
+        <a href="#entanglement" class="nav-link tategaki" onclick="toggleMenu()">絡合 (Связь)</a>
+        <a href="#uncertainty" class="nav-link tategaki" onclick="toggleMenu()">不確定 (Хаос)</a>
+    </div>
+
+    <!-- Main Content -->
+    <main class="w-full min-h-screen pb-24">
+
+        <!-- HERO SECTION -->
+        <section id="intro" class="min-h-screen flex flex-col justify-center items-center relative p-8 overflow-hidden">
+            <!-- Background Hokusai stylized wave -->
+            <div class="absolute inset-0 z-[-1] opacity-20 woodblock-effect" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/0d/Great_Wave_off_Kanagawa2.jpg'); background-size: cover; background-position: center; filter: grayscale(100%) sepia(100%) hue-rotate(180deg);"></div>
+
+            <div class="flex flex-row-reverse w-full max-w-5xl justify-between items-start relative">
+                <!-- Title Column -->
+                <div class="h-auto border-l-4 border-[var(--ink-primary)] pl-8 ml-8 py-12">
+                    <h1 class="tategaki text-6xl md:text-8xl woodblock-effect" style="height: 60vh;">
+                        量子浮世絵
+                    </h1>
+                    <p class="tategaki text-xl mt-8 text-[var(--hokusai-blue)]">Квантовый плывущий мир</p>
+                </div>
+
+                <!-- Intro Text Block -->
+                <div class="flex-1 mt-24 max-w-lg woodblock-effect">
+                    <div class="frame-border bg-[var(--paper-bg)] p-8 shadow-lg transform rotate-1">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="chapter-number">序章</span>
+                            <div class="hanko">伊豆</div>
+                        </div>
+                        <h2 class="text-3xl mb-4 font-bold text-[var(--prussian-blue)]">Наблюдатель создает реальность</h2>
+                        <p class="mb-4 text-justify">
+                            Мир не существует, пока ты на него не посмотришь. Подобно гравюре, которая спит на доске мастера, пока бумага не коснется чернил.
+                        </p>
+                        <p class="text-justify text-sm opacity-80 italic">
+                            "Если дерево падает в лесу, и никого нет рядом, чтобы услышать... оно находится в суперпозиции падения и тишины."
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce opacity-50">
+                <span class="tategaki text-xl">スクロール (Листай)</span>
+            </div>
+        </section>
+
+        <!-- SECTION 1: WAVE FUNCTION (THE GREAT WAVE) -->
+        <section id="wave" class="min-h-screen flex items-center py-20 relative">
+            <div class="container mx-auto px-4 md:px-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                    
+                    <!-- Visual Art -->
+                    <div class="relative reveal-text woodblock-effect">
+                        <div class="border-4 border-[var(--prussian-blue)] p-4 bg-[var(--paper-dark)]">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/0/0d/Great_Wave_off_Kanagawa2.jpg" alt="Great Wave" class="w-full h-auto mix-blend-multiply filter sepia opacity-90">
+                            <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center mix-blend-screen opacity-60">
+                                <!-- SVG Overlay representing Wave Function Graph -->
+                                <svg viewBox="0 0 200 100" class="w-full h-full stroke-[var(--paper-bg)] fill-none stroke-2">
+                                    <path d="M0,50 Q25,0 50,50 T100,50 T150,50 T200,50" stroke-dasharray="5,5">
+                                        <animate attributeName="d" values="M0,50 Q25,0 50,50 T100,50 T150,50 T200,50; M0,50 Q25,100 50,50 T100,50 T150,50 T200,50; M0,50 Q25,0 50,50 T100,50 T150,50 T200,50" dur="10s" repeatCount="indefinite" />
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="absolute -bottom-8 -right-4 tategaki text-sm bg-[var(--faded-red)] text-[var(--paper-bg)] p-2">図一・波動関数</p>
+                    </div>
+
+                    <!-- Text -->
+                    <div class="reveal-text">
+                        <span class="chapter-number">壱</span>
+                        <h2 class="text-5xl mb-6 text-[var(--hokusai-blue)] font-serif">Коллапс Волны</h2>
+                        <p class="mb-6 text-lg indent-8">
+                            Великая Волна у Канагавы — это не вода. Это вероятность. Электрон не находится в одной точке, он размазан по полотну вселенной, как синяя краска на гравюре. 
+                        </p>
+                        <p class="mb-6 text-lg indent-8">
+                            Он везде и нигде одновременно. Но стоит рыбаку в лодке (наблюдателю) взглянуть на гребень — волна "схлопывается". Вероятность становится фактом. Мокрая реальность ударяет в лицо.
+                        </p>
+                        <div class="h-1 w-24 bg-[var(--faded-red)] my-4"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: ENTANGLEMENT (RED STRING OF FATE) -->
+        <section id="entanglement" class="min-h-screen flex items-center py-20 bg-[var(--paper-dark)] relative woodblock-effect">
+            <!-- Background aesthetic strokes -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
+                <div class="absolute top-10 left-10 text-[10rem] font-serif text-[var(--ink-secondary)]">絆</div>
+            </div>
+
+            <div class="container mx-auto px-4 md:px-12 relative z-10">
+                <div class="flex flex-col md:flex-row-reverse items-center gap-12">
+                    
+                    <!-- Visual Art -->
+                    <div class="w-full md:w-1/2 reveal-text">
+                        <div class="relative h-96 w-full border-2 border-[var(--ink-primary)] bg-[var(--paper-bg)] flex items-center justify-center overflow-hidden p-8">
+                            <!-- Two particles represented as circles -->
+                            <div class="absolute left-16 top-1/2 w-12 h-12 rounded-full border-4 border-[var(--ink-primary)] bg-[var(--prussian-blue)] z-10"></div>
+                            <div class="absolute right-16 top-1/2 w-12 h-12 rounded-full border-4 border-[var(--ink-primary)] bg-[var(--faded-red)] z-10"></div>
+                            
+                            <!-- The Red String (SVG) -->
+                            <svg class="absolute top-0 left-0 w-full h-full pointer-events-none z-0" style="mix-blend-mode: multiply;">
+                                <path d="M80,192 C200,192 200,192 400,192" stroke="var(--stamp-red)" stroke-width="4" fill="none" stroke-dasharray="10,5">
+                                    <animate attributeName="d" values="M80,192 C200,50 250,300 400,192; M80,192 C200,300 250,50 400,192; M80,192 C200,50 250,300 400,192" dur="8s" repeatCount="indefinite" />
+                                </path>
+                            </svg>
+                            
+                            <div class="absolute bottom-4 left-4 tategaki text-xs">距離は幻想 (Расстояние — иллюзия)</div>
+                        </div>
+                    </div>
+
+                    <!-- Text -->
+                    <div class="w-full md:w-1/2 reveal-text">
+                        <span class="chapter-number">弐</span>
+                        <h2 class="text-4xl md:text-5xl mb-6 text-[var(--ink-primary)]">Красная Нить Запутанности</h2>
+                        <p class="mb-4 text-lg text-justify">
+                            В Японии говорят, что красная нить судьбы связывает тех, кому суждено встретиться. В квантовом мире эта нить неразрывна, даже если частицы находятся на разных концах Галактики.
+                        </p>
+                        <p class="mb-4 text-lg text-justify font-bold text-[var(--faded-red)]">
+                            Жуткое действие на расстоянии.
+                        </p>
+                        <p class="mb-4 text-justify">
+                            Измени спин одной частицы (поверни гравюру), и вторая мгновенно изменится в ответ. Без задержек. Без сигнала. Пространство между ними не имеет значения. Это единый организм, разделенный пустотой.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: SCHRODINGER'S NEKOMATA (CAT) -->
+        <section id="uncertainty" class="min-h-screen flex items-center justify-center py-24 relative">
+            <div class="max-w-4xl w-full mx-auto px-6 text-center">
+                
+                <div class="mb-12 reveal-text">
+                    <span class="chapter-number block mb-2">参</span>
+                    <h2 class="text-5xl md:text-7xl mb-8 woodblock-effect">Кот и Яд</h2>
+                </div>
+
+                <div class="relative w-full max-w-md mx-auto h-80 border-8 border-double border-[var(--ink-primary)] bg-[var(--paper-dark)] flex items-center justify-center mb-12 shadow-2xl woodblock-effect group cursor-pointer transition-colors duration-700 hover:bg-[var(--ink-primary)] hover:text-[var(--paper-bg)] overflow-hidden" id="catBox">
+                    
+                    <!-- The "Closed" State -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-500 group-hover:opacity-0">
+                        <div class="text-6xl mb-4">📦</div>
+                        <p class="tategaki text-2xl font-bold">生 / 死</p>
+                        <p class="text-sm mt-4">(Не открывай)</p>
+                    </div>
+
+                    <!-- The "Open" State (Hover) -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                        <!-- Using text art for the cat to keep style -->
+                        <div class="text-8xl text-[var(--faded-red)]">猫</div>
+                        <p class="mt-4 font-bold">Суперпозиция разрушена.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left reveal-text">
+                    <div class="bg-[var(--paper-bg)] p-6 border border-[var(--ink-primary)] shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]">
+                        <h3 class="text-xl mb-2 border-b border-[var(--ink-primary)] pb-2">Парадокс</h3>
+                        <p>Кот в ящике с ядом — это *Бакэнэко* (кот-демон). Пока крышка закрыта, он и мертв, и жив. Он смеется над нашей логикой. Вселенная хранит обе версии истории, пока мы не вмешаемся.</p>
+                    </div>
+                    <div class="bg-[var(--paper-bg)] p-6 border border-[var(--ink-primary)] shadow-[5px_5px_0px_0px_rgba(194,94,94,0.8)]">
+                        <h3 class="text-xl mb-2 border-b border-[var(--faded-red)] pb-2 text-[var(--faded-red)]">Многомировая интерпретация</h3>
+                        <p>А может, волна не схлопывается? Может, в момент открытия ящика мир расщепляется. В одной гравюре ты плачешь над котом. В другой — кормишь его тунцом.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="py-20 border-t-4 border-[var(--ink-primary)] text-center woodblock-effect relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            <p class="tategaki text-4xl mx-auto h-48 inline-block mr-8">完</p>
+            <div class="inline-block align-top text-left mt-12">
+                <p class="mb-2 font-bold">Создано Изуми</p>
+                <p class="text-sm mb-4">Код как искусство. Физика как магия.</p>
+                <div class="hanko">量子</div>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        // Simple Intersection Observer for scroll animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // Optional: stop observing once revealed
+                    // observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-text').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Menu Logic
+        function toggleMenu() {
+            const nav = document.getElementById('navOverlay');
+            nav.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
