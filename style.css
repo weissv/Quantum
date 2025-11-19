@@ -1,0 +1,213 @@
+        :root {
+            --paper-bg: #f0ebd8;
+            --paper-dark: #e6e0c5;
+            --ink-primary: #1a1a1a;
+            --ink-secondary: #2f2f2f;
+            --hokusai-blue: #2b4c65;
+            --prussian-blue: #102a45;
+            --faded-red: #c25e5e;
+            --stamp-red: #d93a3a;
+        }
+
+        body {
+            background-color: var(--paper-bg);
+            color: var(--ink-primary);
+            font-family: 'Noto Serif JP', serif;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- TEXTURE GENERATION (NO EXTERNAL IMAGES EXCEPT CONTENT) --- */
+        .paper-texture {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+        }
+
+        /* --- WOODBLOCK FILTER EFFECT --- */
+        /* This creates the roughened, ink-bleed edges typical of woodblock prints */
+        .woodblock-effect {
+            filter: url('#woodblock-filter');
+        }
+
+        /* --- TYPOGRAPHY --- */
+        .tategaki {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 0.3em;
+        }
+
+        h1, h2, h3 {
+            font-weight: 900;
+            letter-spacing: -0.05em;
+        }
+
+        p {
+            font-weight: 500;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        /* --- LAYOUT UTILS --- */
+        .frame-border {
+            border: 2px solid var(--ink-primary);
+            padding: 10px;
+            position: relative;
+        }
+        
+        .frame-border::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 1px solid var(--ink-primary);
+            pointer-events: none;
+        }
+
+        .ink-wash {
+            position: relative;
+        }
+        .ink-wash::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 0%, var(--paper-dark) 100%);
+            opacity: 0.5;
+            mix-blend-mode: multiply;
+        }
+
+        /* --- STAMP --- */
+        .hanko {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--stamp-red);
+            color: var(--stamp-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            transform: rotate(-5deg);
+            mix-blend-mode: multiply;
+            opacity: 0.8;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .hanko:hover {
+            transform: rotate(0deg) scale(1.1);
+        }
+
+        /* --- SCROLL ANIMATIONS --- */
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Specific Japanese layout tweaks */
+        .chapter-number {
+            font-family: 'IM Fell English SC', serif;
+            color: var(--faded-red);
+            font-size: 1.5rem;
+        }
+
+        /* Grain overlay for images to make them look printed */
+        .printed-image {
+            filter: sepia(0.4) contrast(1.2) brightness(0.9) url('#woodblock-filter');
+            mix-blend-mode: multiply;
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--paper-bg); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--hokusai-blue); 
+        }
+
+        /* Navigation hidden menu */
+        .nav-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 0;
+            background: var(--hokusai-blue);
+            z-index: 10000;
+            transition: width 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .nav-overlay.open {
+            width: 100%;
+        }
+
+        .nav-link {
+            color: var(--paper-bg);
+            font-size: 2rem;
+            margin: 20px 0;
+            text-decoration: none;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        
+        .nav-overlay.open .nav-link {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Delays for menu items */
+        .nav-link:nth-child(1) { transition-delay: 0.1s; }
+        .nav-link:nth-child(2) { transition-delay: 0.2s; }
+        .nav-link:nth-child(3) { transition-delay: 0.3s; }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 3rem;
+            color: var(--paper-bg);
+            cursor: pointer;
+        }
+
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9998;
+            cursor: pointer;
+            mix-blend-mode: multiply;
+        }
+        
+        .menu-char {
+            font-size: 2rem;
+            font-weight: 900;
+            border: 2px solid var(--ink-primary);
+            padding: 5px 10px;
+            background: var(--paper-bg);
+        }
