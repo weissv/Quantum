@@ -33,7 +33,6 @@
         }
 
         /* --- WOODBLOCK FILTER EFFECT --- */
-        /* This creates the roughened, ink-bleed edges typical of woodblock prints */
         .woodblock-effect {
             filter: url('#woodblock-filter');
         }
@@ -74,18 +73,6 @@
             pointer-events: none;
         }
 
-        .ink-wash {
-            position: relative;
-        }
-        .ink-wash::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, transparent 0%, var(--paper-dark) 100%);
-            opacity: 0.5;
-            mix-blend-mode: multiply;
-        }
-
         /* --- STAMP --- */
         .hanko {
             width: 60px;
@@ -104,8 +91,34 @@
             cursor: pointer;
             transition: transform 0.3s ease;
         }
-        .hanko:hover {
-            transform: rotate(0deg) scale(1.1);
+
+        /* Rotatable Hanko for Entanglement */
+        .hanko-seal {
+            width: 80px;
+            height: 80px;
+            border: 4px solid var(--stamp-red);
+            color: var(--stamp-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            background: rgba(240, 235, 216, 0.9);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            user-select: none;
+            will-change: transform;
+        }
+        .hanko-seal::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            background: var(--ink-primary);
+            border-radius: 50%;
         }
 
         /* --- SCROLL ANIMATIONS --- */
@@ -119,21 +132,12 @@
             transform: translateY(0);
         }
 
-        /* Specific Japanese layout tweaks */
         .chapter-number {
             font-family: 'IM Fell English SC', serif;
             color: var(--faded-red);
             font-size: 1.5rem;
         }
-
-        /* Grain overlay for images to make them look printed */
-        .printed-image {
-            filter: sepia(0.4) contrast(1.2) brightness(0.9) url('#woodblock-filter');
-            mix-blend-mode: multiply;
-            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-        }
         
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -144,7 +148,6 @@
             background: var(--hokusai-blue); 
         }
 
-        /* Navigation hidden menu */
         .nav-overlay {
             position: fixed;
             top: 0;
@@ -181,7 +184,6 @@
             transform: translateY(0);
         }
 
-        /* Delays for menu items */
         .nav-link:nth-child(1) { transition-delay: 0.1s; }
         .nav-link:nth-child(2) { transition-delay: 0.2s; }
         .nav-link:nth-child(3) { transition-delay: 0.3s; }
